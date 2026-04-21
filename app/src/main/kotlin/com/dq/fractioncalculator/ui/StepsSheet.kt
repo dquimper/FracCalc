@@ -11,12 +11,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dq.fractioncalculator.math.Step
 import com.dq.fractioncalculator.ui.theme.TextPrimary
+import java.util.Locale
+import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,36 +27,250 @@ fun StepsSheet(
     steps: List<Step>,
     onDismiss: () -> Unit
 ) {
+    val equationStep = steps.filterIsInstance<Step.ShowEquation>().firstOrNull()
+    val middleSteps = steps.filter { it !is Step.ShowEquation && it !is Step.FinalResult }
+    val finalStep = steps.filterIsInstance<Step.FinalResult>().firstOrNull()
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = Color.Transparent,
         dragHandle = null
     ) {
-        Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.85f)) {
+        Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.9f)) {
             GridPaperBackground(modifier = Modifier.matchParentSize())
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
-                steps.forEach { step ->
-                    StepRow(step)
+                // ── EQUATION ────────────────────────────────────────────
+                SheetSection("Equation") {
+                    equationStep?.let { s ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.End,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(end = 18.dp, top = 10.dp, bottom = 16.dp)
+                        ) {
+                            SheetMixed(s.left.whole, s.left.num, s.left.den)
+                            Text(
+                                "  ${s.op.symbol}  ",
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Serif,
+                                color = TextPrimary
+                            )
+                            SheetMixed(s.right.whole, s.right.num, s.right.den)
+                        }
+                    }
                 }
-                Spacer(Modifier.height(8.dp))
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier.align(Alignment.End),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF555555))
+
+                SectionDivider()
+
+                // ── STEPS ────────────────────────────────────────────────
+                SheetSection("Steps") {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = 18.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        middleSteps.forEach { step ->
+                            Spacer(Modifier.height(16.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                SheetStepContent(step)
+                            }
+                        }
+                        Spacer(Modifier.height(16.dp))
+                    }
+                }
+
+                SectionDivider()
+
+                // ── SOLUTION ─────────────────────────────────────────────
+                SheetSection("Solution") {
+                    finalStep?.let { s ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(end = 18.dp, top = 10.dp, bottom = 16.dp),
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    "=",
+                                    fontSize = 40.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = FontFamily.Serif,
+                                    color = TextPrimary
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                SheetSolution(s.whole, s.num, s.den)
+                            }
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                "(${formatDecimal(s.decimal)})",
+                                fontSize = 14.sp,
+                                fontStyle = FontStyle.Italic,
+                                color = TextPrimary.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 16.dp, bottom = 16.dp, top = 6.dp),
+                    horizontalArrangement = Arrangement.End
                 ) {
-                    Text("Close", color = Color.White)
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF555555))
+                    ) {
+                        Text("Close", color = Color.White)
+                    }
                 }
-                Spacer(Modifier.height(16.dp))
             }
         }
     }
 }
+
+// ── Section helpers ──────────────────────────────────────────────────────────
+
+@Composable
+private fun SheetSection(label: String, content: @Composable () -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            label,
+            modifier = Modifier.padding(start = 14.dp, top = 10.dp, bottom = 6.dp),
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Normal,
+            color = TextPrimary.copy(alpha = 0.5f)
+        )
+        HorizontalDivider(thickness = 0.5.dp, color = TextPrimary.copy(alpha = 0.2f))
+        content()
+    }
+}
+
+@Composable
+private fun SectionDivider() {
+    HorizontalDivider(thickness = 1.dp, color = TextPrimary.copy(alpha = 0.4f))
+}
+
+// ── Equation display ─────────────────────────────────────────────────────────
+
+@Composable
+private fun SheetMixed(whole: Long, num: Long, den: Long) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        if (whole != 0L || num == 0L) {
+            Text(
+                whole.toString(),
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Serif,
+                color = TextPrimary
+            )
+        }
+        if (num != 0L) {
+            if (whole != 0L) Spacer(Modifier.width(3.dp))
+            FracColumn(num.toString(), den.toString(), textSize = 17)
+        }
+    }
+}
+
+// ── Step content ─────────────────────────────────────────────────────────────
+
+@Composable
+private fun SheetStepContent(step: Step) {
+    when (step) {
+        is Step.ConvertToImproper -> {
+            SheetFracExpr(step.left.wholeExpr, step.left.den)
+            StepOpText(step.op.symbol)
+            SheetFracExpr(step.right.wholeExpr, step.right.den)
+        }
+        is Step.SimplifiedImproper -> {
+            SheetFrac(step.left.num, step.left.den)
+            StepOpText(step.op.symbol)
+            SheetFrac(step.right.num, step.right.den)
+        }
+        is Step.CommonDenom -> {
+            SheetFracExpr("${step.left.num}×${step.left.scale}", step.left.den)
+            StepOpText(step.op.symbol)
+            SheetFracExpr("${step.right.num}×${step.right.scale}", step.right.den)
+        }
+        is Step.AfterScale -> {
+            SheetFrac(step.left.num, step.left.den)
+            StepOpText(step.op.symbol)
+            SheetFrac(step.right.num, step.right.den)
+        }
+        is Step.CombinedNumerator -> {
+            val rAbs = abs(step.right)
+            val expr = "${step.left}${if (step.right < 0) "−$rAbs" else "+${step.right}"}"
+            SheetFracExpr(expr, step.den)
+        }
+        is Step.FracExprStep -> FracColumn(step.numExpr, step.denExpr, textSize = 16)
+        is Step.SingleFraction -> SheetFrac(step.num, step.den)
+        is Step.BackToMixed -> SheetFracExpr("${step.whole}×${step.den}+${step.rem}", step.den)
+        else -> Unit
+    }
+}
+
+@Composable
+private fun StepOpText(symbol: String) {
+    Text(
+        "  $symbol  ",
+        fontSize = 20.sp,
+        fontWeight = FontWeight.Bold,
+        fontFamily = FontFamily.Serif,
+        color = TextPrimary
+    )
+}
+
+@Composable
+private fun SheetFrac(num: Long, den: Long) = FracColumn(num.toString(), den.toString(), textSize = 20)
+
+@Composable
+private fun SheetFracExpr(expr: String, den: Long) = FracColumn(expr, den.toString(), textSize = 16)
+
+@Composable
+private fun FracColumn(top: String, bottom: String, textSize: Int) {
+    Column(
+        modifier = Modifier.width(IntrinsicSize.Max),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(top, fontSize = textSize.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif, color = TextPrimary)
+        Spacer(modifier = Modifier.height(1.5.dp).fillMaxWidth().background(TextPrimary))
+        Text(bottom, fontSize = textSize.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif, color = TextPrimary)
+    }
+}
+
+// ── Solution display ─────────────────────────────────────────────────────────
+
+@Composable
+private fun SheetSolution(whole: Long, num: Long, den: Long) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        if (whole != 0L || num == 0L) {
+            Text(
+                whole.toString(),
+                fontSize = 56.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Serif,
+                color = TextPrimary
+            )
+        }
+        if (num != 0L) {
+            Spacer(Modifier.width(5.dp))
+            FracColumn(num.toString(), den.toString(), textSize = 24)
+        }
+    }
+}
+
+private fun formatDecimal(d: Double): String =
+    String.format(Locale.US, "%.5f", d).trimEnd('0').trimEnd('.')
+
+// ── Background ───────────────────────────────────────────────────────────────
 
 @Composable
 fun GridPaperBackground(modifier: Modifier = Modifier) {
@@ -70,114 +287,5 @@ fun GridPaperBackground(modifier: Modifier = Modifier) {
             drawLine(lineColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 0.7f)
             y += gridSize
         }
-    }
-}
-
-@Composable
-fun StepRow(step: Step) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        when (step) {
-            is Step.ShowEquation -> {
-                Text("Equation", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary.copy(alpha = 0.5f),
-                    modifier = Modifier.weight(1f))
-                InlineMixed(step.left.whole, step.left.num, step.left.den)
-                Text(" ${step.op.symbol} ", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                InlineMixed(step.right.whole, step.right.num, step.right.den)
-            }
-            is Step.ConvertToImproper -> {
-                Spacer(Modifier.weight(1f))
-                InlineFracExpr(step.left.wholeExpr, step.left.den)
-                Text(" ${step.op.symbol} ", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                InlineFracExpr(step.right.wholeExpr, step.right.den)
-            }
-            is Step.SimplifiedImproper -> {
-                Spacer(Modifier.weight(1f))
-                InlineFrac(step.left.num, step.left.den)
-                Text(" ${step.op.symbol} ", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                InlineFrac(step.right.num, step.right.den)
-            }
-            is Step.CommonDenom -> {
-                Spacer(Modifier.weight(1f))
-                val l = step.left
-                val r = step.right
-                InlineFracExpr("${l.num}×${l.scale}", l.den)
-                Text(" ${step.op.symbol} ", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                InlineFracExpr("${r.num}×${r.scale}", r.den)
-            }
-            is Step.AfterScale -> {
-                Spacer(Modifier.weight(1f))
-                InlineFrac(step.left.num, step.left.den)
-                Text(" ${step.op.symbol} ", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                InlineFrac(step.right.num, step.right.den)
-            }
-            is Step.CombinedNumerator -> {
-                Spacer(Modifier.weight(1f))
-                val opSym = if (step.right < 0) "−" else step.op.symbol
-                val rAbs = kotlin.math.abs(step.right)
-                InlineFracExpr("${step.left}${if (step.right < 0) "−$rAbs" else "+${step.right}"}", step.den)
-            }
-            is Step.SingleFraction -> {
-                Spacer(Modifier.weight(1f))
-                InlineFrac(step.num, step.den)
-            }
-            is Step.BackToMixed -> {
-                Spacer(Modifier.weight(1f))
-                InlineFracExpr("${step.whole}×${step.den}+${step.rem}", step.den)
-            }
-            is Step.FinalResult -> {
-                Text("Steps", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary.copy(alpha = 0.5f),
-                    modifier = Modifier.weight(1f))
-                val (w, n, d) = Triple(step.whole, step.num, step.den)
-                if (n != 0L) {
-                    Text(w.toString(), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                    Spacer(Modifier.width(4.dp))
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(n.toString(), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                        HorizontalDivider(thickness = 1.5.dp, color = TextPrimary, modifier = Modifier.width(24.dp))
-                        Text(d.toString(), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                    }
-                } else {
-                    Text(w.toString(), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun InlineMixed(whole: Long, num: Long, den: Long) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        if (whole != 0L || num == 0L) {
-            Text(whole.toString(), fontSize = 26.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-        }
-        if (num != 0L) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(num.toString(), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                HorizontalDivider(thickness = 1.dp, color = TextPrimary, modifier = Modifier.width(20.dp))
-                Text(den.toString(), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-            }
-        }
-    }
-}
-
-@Composable
-fun InlineFrac(num: Long, den: Long) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(num.toString(), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-        HorizontalDivider(thickness = 1.5.dp, color = TextPrimary, modifier = Modifier.width(32.dp))
-        Text(den.toString(), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-    }
-}
-
-@Composable
-fun InlineFracExpr(expr: String, den: Long) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(expr, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary, fontStyle = FontStyle.Normal)
-        HorizontalDivider(thickness = 1.5.dp, color = TextPrimary, modifier = Modifier.widthIn(min = 24.dp))
-        Text(den.toString(), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
     }
 }

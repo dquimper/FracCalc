@@ -8,12 +8,13 @@ sealed class Step {
     data class ShowEquation(val left: MixedRep, val op: Op, val right: MixedRep) : Step()
     data class ConvertToImproper(val left: ImproperRep, val op: Op, val right: ImproperRep) : Step()
     data class SimplifiedImproper(val left: FracRep, val op: Op, val right: FracRep) : Step()
+    data class FracExprStep(val numExpr: String, val denExpr: String) : Step()
     data class CommonDenom(val left: ScaledRep, val op: Op, val right: ScaledRep, val lcm: Long) : Step()
     data class AfterScale(val left: FracRep, val op: Op, val right: FracRep) : Step()
     data class CombinedNumerator(val left: Long, val op: Op, val right: Long, val den: Long) : Step()
     data class SingleFraction(val num: Long, val den: Long) : Step()
     data class BackToMixed(val whole: Long, val rem: Long, val den: Long) : Step()
-    data class FinalResult(val whole: Long, val num: Long, val den: Long) : Step()
+    data class FinalResult(val whole: Long, val num: Long, val den: Long, val decimal: Double) : Step()
 }
 
 data class MixedRep(val whole: Long, val num: Long, val den: Long)
@@ -30,13 +31,24 @@ fun computeWithSteps(leftFrac: Fraction, op: Op, rightFrac: Fraction): Pair<Frac
 
     val lImproper = toImproper(lw, ln, ld)
     val rImproper = toImproper(rw, rn, rd)
-    steps.add(Step.ConvertToImproper(lImproper, op, rImproper))
 
     val lFrac = Fraction(lImproper.num, lImproper.den).simplify()
     val rFrac = Fraction(rImproper.num, rImproper.den).simplify()
 
-    if (lFrac.num != lImproper.num || lFrac.den != lImproper.den ||
-        rFrac.num != rImproper.num || rFrac.den != rImproper.den) {
+    // ConvertToImproper is only meaningful when at least one operand is a genuine
+    // mixed number (has both a non-zero whole part and a non-zero fractional part).
+    val isMixed = { w: Long, n: Long -> w != 0L && n != 0L }
+    val showConvert = isMixed(lw, ln) || isMixed(rw, rn)
+    if (showConvert) {
+        steps.add(Step.ConvertToImproper(lImproper, op, rImproper))
+    }
+
+    // Show SimplifiedImproper when it adds new information:
+    // - after a ConvertToImproper (to display the evaluated result), or
+    // - when simplification actually changed the fraction (e.g. 4/6 → 2/3).
+    val simplificationChanged = lFrac.num != lImproper.num || lFrac.den != lImproper.den ||
+        rFrac.num != rImproper.num || rFrac.den != rImproper.den
+    if (showConvert || simplificationChanged) {
         steps.add(Step.SimplifiedImproper(FracRep(lFrac.num, lFrac.den), op, FracRep(rFrac.num, rFrac.den)))
     }
 
@@ -58,20 +70,29 @@ fun computeWithSteps(leftFrac: Fraction, op: Op, rightFrac: Fraction): Pair<Frac
             val sumNum = lScaled + rScaled
             steps.add(Step.SingleFraction(sumNum, denom))
             result = Fraction(sumNum, denom).simplify()
+            if (result.num != sumNum || result.den != denom) {
+                steps.add(Step.SingleFraction(result.num, result.den))
+            }
         }
         Op.MUL -> {
+            val productNum = lFrac.num * rFrac.num
+            val productDen = lFrac.den * rFrac.den
+            steps.add(Step.FracExprStep("${lFrac.num}×${rFrac.num}", "${lFrac.den}×${rFrac.den}"))
+            steps.add(Step.SingleFraction(productNum, productDen))
             result = lFrac * rFrac
-            steps.add(Step.SingleFraction(lFrac.num * rFrac.num, lFrac.den * rFrac.den))
-            if (result.num != lFrac.num * rFrac.num || result.den != lFrac.den * rFrac.den) {
+            if (result.num != productNum || result.den != productDen) {
                 steps.add(Step.SingleFraction(result.num, result.den))
             }
         }
         Op.DIV -> {
             val recipDen = abs(rFrac.num)
             val recipNum = rFrac.den * (if (rFrac.num < 0) -1L else 1L)
-            steps.add(Step.SingleFraction(lFrac.num * recipNum, lFrac.den * recipDen))
+            val productNum = lFrac.num * recipNum
+            val productDen = lFrac.den * recipDen
+            steps.add(Step.FracExprStep("${lFrac.num}×${recipNum}", "${lFrac.den}×${recipDen}"))
+            steps.add(Step.SingleFraction(productNum, productDen))
             result = lFrac / rFrac
-            if (result.num * (lFrac.den * recipDen) != lFrac.num * recipNum * result.den) {
+            if (result.num != productNum || result.den != productDen) {
                 steps.add(Step.SingleFraction(result.num, result.den))
             }
         }
@@ -81,13 +102,13 @@ fun computeWithSteps(leftFrac: Fraction, op: Op, rightFrac: Fraction): Pair<Frac
         val (rw2, rn2, rd2) = result.toMixed()
         if (rw2 != 0L && rn2 != 0L) {
             steps.add(Step.BackToMixed(rw2, rn2, rd2))
-            steps.add(Step.FinalResult(rw2, rn2, rd2))
+            steps.add(Step.FinalResult(rw2, rn2, rd2, result.toDouble()))
         } else {
-            steps.add(Step.FinalResult(rw2, rn2, rd2))
+            steps.add(Step.FinalResult(rw2, rn2, rd2, result.toDouble()))
         }
     } else {
         val whole = result.num / result.den
-        steps.add(Step.FinalResult(whole, 0L, result.den))
+        steps.add(Step.FinalResult(whole, 0L, result.den, result.toDouble()))
     }
 
     return result to steps
