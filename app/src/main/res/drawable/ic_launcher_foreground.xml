@@ -5,21 +5,27 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Numerator: single circle centered at (54, 28) r=13 -->
+    <!-- "1": left-flag serif + vertical body -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M41,28 A13,13 0 0,1 67,28 A13,13 0 0,1 41,28 Z"/>
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M44,36 L54,27 L54,45"/>
 
     <!-- Fraction bar -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M16,51 L92,51 L92,57 L16,57 Z"/>
+        android:pathData="M27,48 L81,48 L81,53 L27,53 Z"/>
 
-    <!-- Denominator: two circles centered at (36,76) and (72,76) r=11 -->
+    <!-- "2": arched top, diagonal, base -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M25,76 A11,11 0 0,1 47,76 A11,11 0 0,1 25,76 Z"/>
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M61,76 A11,11 0 0,1 83,76 A11,11 0 0,1 61,76 Z"/>
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M38,68 Q54,57 70,68 L38,79 L70,79"/>
+
 </vector>
