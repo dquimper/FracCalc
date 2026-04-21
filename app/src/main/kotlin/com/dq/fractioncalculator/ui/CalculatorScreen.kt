@@ -91,8 +91,8 @@ fun TopBar(onHistoryClick: () -> Unit) {
         }
         Spacer(Modifier.weight(1f))
         val title = buildAnnotatedString {
-            withStyle(SpanStyle(fontWeight = FontWeight.Normal, fontSize = 20.sp)) { append("FRACTION") }
-            withStyle(SpanStyle(fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)) { append("PLUS") }
+            withStyle(SpanStyle(fontWeight = FontWeight.Normal, fontSize = 20.sp)) { append("FRAC") }
+            withStyle(SpanStyle(fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)) { append("CALC") }
         }
         Text(text = title, fontFamily = FontFamily.SansSerif, color = TextPrimary)
         Spacer(Modifier.width(48.dp))
