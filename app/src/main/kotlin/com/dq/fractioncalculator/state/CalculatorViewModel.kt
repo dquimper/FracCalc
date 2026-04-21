@@ -53,12 +53,14 @@ data class HistoryEntry(
 )
 
 enum class ActiveSide { LEFT, RIGHT }
+enum class ResultFormat { MIXED, IMPROPER }
 
 class CalculatorViewModel : ViewModel() {
     var left by mutableStateOf(MixedInput())
     var right by mutableStateOf(MixedInput())
     var op by mutableStateOf<Op?>(null)
     var result by mutableStateOf<Fraction?>(null)
+    var resultFormat by mutableStateOf(ResultFormat.MIXED)
     var steps by mutableStateOf<List<Step>>(emptyList())
     var activeSide by mutableStateOf(ActiveSide.LEFT)
     var showSteps by mutableStateOf(false)
@@ -114,6 +116,10 @@ class CalculatorViewModel : ViewModel() {
     }
 
     fun onEquals() {
+        if (result != null) {
+            resultFormat = if (resultFormat == ResultFormat.MIXED) ResultFormat.IMPROPER else ResultFormat.MIXED
+            return
+        }
         if (op == null) {
             val frac = left.toFraction() ?: return
             result = frac.simplify()
@@ -189,6 +195,7 @@ class CalculatorViewModel : ViewModel() {
 
     private fun clearResult() {
         result = null
+        resultFormat = ResultFormat.MIXED
         steps = emptyList()
     }
 

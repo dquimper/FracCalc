@@ -21,6 +21,7 @@ import com.dq.fractioncalculator.math.Fraction
 import com.dq.fractioncalculator.math.Op
 import com.dq.fractioncalculator.state.ActiveSide
 import com.dq.fractioncalculator.state.MixedInput
+import com.dq.fractioncalculator.state.ResultFormat
 import com.dq.fractioncalculator.ui.theme.DisplayBackground
 import com.dq.fractioncalculator.ui.theme.TextPrimary
 import java.util.Locale
@@ -42,6 +43,7 @@ fun Display(
     right: MixedInput,
     op: Op?,
     result: Fraction?,
+    resultFormat: ResultFormat,
     activeSide: ActiveSide,
     onResultTap: () -> Unit,
     modifier: Modifier = Modifier
@@ -96,7 +98,7 @@ fun Display(
                             OpText("=", DisplaySize.RESULT.opSize, alpha = 0.55f)
                             Spacer(Modifier.width(4.dp))
                             Box(modifier = Modifier.clickable { onResultTap() }) {
-                                ResultDisplay(result)
+                                ResultDisplay(result, resultFormat)
                             }
                         }
                         op != null && result == null -> {
@@ -116,7 +118,7 @@ fun Display(
                             OpText("=", DisplaySize.RESULT.opSize, alpha = 0.55f)
                             Spacer(Modifier.width(4.dp))
                             Box(modifier = Modifier.clickable { onResultTap() }) {
-                                ResultDisplay(result)
+                                ResultDisplay(result, resultFormat)
                             }
                         }
                     }
@@ -187,27 +189,38 @@ internal fun MixedDisplay(input: MixedInput, size: DisplaySize, highlight: Boole
 }
 
 @Composable
-fun ResultDisplay(result: Fraction) {
-    val (whole, num, den) = result.toMixed()
+fun ResultDisplay(result: Fraction, format: ResultFormat = ResultFormat.MIXED) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        if (whole != 0L || num == 0L) {
-            Text(
-                text = whole.toString(),
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Serif,
-                color = TextPrimary
-            )
-        }
-        if (num != 0L) {
-            Spacer(Modifier.width(4.dp))
+        if (format == ResultFormat.IMPROPER) {
             Column(
                 modifier = Modifier.width(IntrinsicSize.Max),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(num.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif, color = TextPrimary)
+                Text(result.num.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif, color = TextPrimary)
                 Spacer(modifier = Modifier.height(1.5.dp).fillMaxWidth().background(TextPrimary))
-                Text(den.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif, color = TextPrimary)
+                Text(result.den.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif, color = TextPrimary)
+            }
+        } else {
+            val (whole, num, den) = result.toMixed()
+            if (whole != 0L || num == 0L) {
+                Text(
+                    text = whole.toString(),
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Serif,
+                    color = TextPrimary
+                )
+            }
+            if (num != 0L) {
+                Spacer(Modifier.width(4.dp))
+                Column(
+                    modifier = Modifier.width(IntrinsicSize.Max),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(num.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif, color = TextPrimary)
+                    Spacer(modifier = Modifier.height(1.5.dp).fillMaxWidth().background(TextPrimary))
+                    Text(den.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif, color = TextPrimary)
+                }
             }
         }
     }

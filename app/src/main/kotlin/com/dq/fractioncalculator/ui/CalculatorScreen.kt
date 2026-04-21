@@ -36,6 +36,7 @@ fun CalculatorScreen(vm: CalculatorViewModel = viewModel()) {
             right = vm.right,
             op = vm.op,
             result = vm.result,
+            resultFormat = vm.resultFormat,
             activeSide = vm.activeSide,
             onResultTap = { vm.showSteps = true },
             modifier = Modifier.fillMaxWidth()
