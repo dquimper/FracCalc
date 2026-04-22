@@ -19,8 +19,8 @@ An Android calculator for mixed-number arithmetic. Enter fractions and mixed num
 
 ### Build from source
 
+**One-time environment setup:**
 ```bash
-# One-time environment setup
 brew install openjdk@17
 brew install --cask android-commandlinetools
 
@@ -33,12 +33,14 @@ yes | sdkmanager --licenses
 sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 ```
 
-```bash
-# Build the APK
-source .envrc
-./gradlew :app:assembleDebug
-# Output: app/build/outputs/apk/debug/app-debug.apk
-```
+**Makefile targets:**
+
+| Target | What it does |
+|--------|-------------|
+| `make build` | Compile and produce `app-debug.apk` |
+| `make install` | Build then install on the connected phone (default: `make`) |
+| `make clean` | Run `gradle clean` |
+| `make bundle` | Build a signed release AAB (requires `publish/keystore.properties`) |
 
 ### Install over wireless ADB
 
@@ -50,13 +52,13 @@ Both Mac and phone must be on the same WiFi network.
 adb pair <IP:pairing-port> <6-digit-code>
 ```
 
-**Connect and install:**
+**Connect, then build and install:**
 ```bash
-source .envrc
-PORT=$(adb mdns services 2>/dev/null | grep RFCX | awk '{print $3}' | cut -d: -f2)
-adb connect 192.168.42.78:$PORT
-adb -s 192.168.42.78:$PORT install -r app/build/outputs/apk/debug/app-debug.apk
+adb connect 192.168.42.78:<port>
+make
 ```
+
+`make install` auto-detects the device by IP or mDNS — no need to pass a serial manually.
 
 ## How to Contribute
 
