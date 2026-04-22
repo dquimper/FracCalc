@@ -68,23 +68,6 @@ make
 - ViewModel + `mutableStateOf` for state
 - Gradle 8.7, AGP 8.5.2, min SDK 26
 
-### Project layout
-
-```
-app/src/main/kotlin/com/dq/fractioncalculator/
-├── math/
-│   ├── Fraction.kt         # Core arithmetic (Long-based, GCD/LCM)
-│   └── Steps.kt            # Step-by-step reduction recording
-├── state/
-│   └── CalculatorViewModel.kt  # Input state, history, event handlers
-└── ui/
-    ├── CalculatorScreen.kt
-    ├── Display.kt
-    ├── Keypad.kt
-    ├── StepsSheet.kt
-    └── HistoryDrawer.kt
-```
-
 ### Running tests
 
 ```bash
