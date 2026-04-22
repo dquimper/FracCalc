@@ -181,7 +181,7 @@ internal fun MixedDisplay(input: MixedInput, size: DisplaySize, highlight: Boole
                     fontSize = size.fracSize,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Serif,
-                    color = color
+                    color = if (input.den.isEmpty()) color.copy(alpha = color.alpha * 0.4f) else color
                 )
             }
         }

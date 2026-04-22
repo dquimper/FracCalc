@@ -68,6 +68,7 @@ class CalculatorViewModel : ViewModel() {
     val history = mutableStateListOf<HistoryEntry>()
 
     fun onWholeDigit(digit: Int) {
+        if (result != null) onClear()
         val s = activeSide
         if (s == ActiveSide.LEFT) {
             left = left.copy(whole = appendDigit(left.whole, digit))
@@ -78,6 +79,7 @@ class CalculatorViewModel : ViewModel() {
     }
 
     fun onNumDigit(digit: Int) {
+        if (result != null) onClear()
         val s = activeSide
         if (s == ActiveSide.LEFT) {
             left = left.copy(num = appendDigit(left.num, digit))
@@ -88,6 +90,7 @@ class CalculatorViewModel : ViewModel() {
     }
 
     fun onDenDigit(digit: Int) {
+        if (result != null) onClear()
         val s = activeSide
         if (s == ActiveSide.LEFT) {
             left = left.copy(den = appendDigit(left.den, digit))
@@ -98,6 +101,7 @@ class CalculatorViewModel : ViewModel() {
     }
 
     fun onDecimalPoint() {
+        if (result != null) onClear()
         val current = if (activeSide == ActiveSide.LEFT) left.whole else right.whole
         if (current.contains('.')) return
         val newWhole = if (current.isEmpty() || current == "-") "${current}0." else "$current."
