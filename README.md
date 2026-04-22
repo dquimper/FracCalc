@@ -39,6 +39,7 @@ sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 |--------|-------------|
 | `make build` | Compile and produce `app-debug.apk` |
 | `make install` | Build then install on the connected phone (default: `make`) |
+| `make test` | Run unit tests on the JVM (no device needed) |
 | `make clean` | Run `gradle clean` |
 | `make bundle` | Build a signed release AAB (requires `publish/keystore.properties`) |
 
@@ -71,7 +72,7 @@ make
 ### Running tests
 
 ```bash
-./gradlew :app:testDebugUnitTest
+make test
 ```
 
 Unit tests cover `Fraction.kt` arithmetic and `Steps.kt` reduction logic and run on the JVM — no device needed.

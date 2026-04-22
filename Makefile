@@ -1,10 +1,15 @@
-SHELL      := /bin/bash
-DEVICE_IP  := 192.168.42.78
-APK        := app/build/outputs/apk/debug/app-debug.apk
+SHELL          := /bin/bash
+DEVICE_IP      := 192.168.42.78
+APK            := app/build/outputs/apk/debug/app-debug.apk
+AAB            := app/build/outputs/bundle/release/app-release.aab
+KEYSTORE_PROPS := publish/keystore.properties
 
-.PHONY: all clean build install push
+.PHONY: all clean build install push bundle test
 
 all: install
+
+test:
+	source .envrc && ./gradlew :app:testDebugUnitTest
 
 clean:
 	source .envrc && ./gradlew clean
@@ -22,3 +27,11 @@ install: build
 	adb -s $$SERIAL install -r $(APK)
 
 push: install
+
+bundle: $(KEYSTORE_PROPS)
+	@grep -q "FILL_IN" $(KEYSTORE_PROPS) && { echo "ERROR: fill in passwords in $(KEYSTORE_PROPS) first"; exit 1; } || true
+	source .envrc && ./gradlew :app:bundleRelease
+	@echo "AAB ready: $(AAB)"
+
+$(KEYSTORE_PROPS):
+	@echo "ERROR: $(KEYSTORE_PROPS) not found — run publish/keystore/create-keystore.sh first"; exit 1
