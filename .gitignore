@@ -12,5 +12,6 @@ app/build/
 *.apk
 *.aab
 .claude/settings.local.json
+.envrc
 Screenshot_*.jpg
 Screenshot_*.png
