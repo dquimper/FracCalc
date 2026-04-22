@@ -10,31 +10,6 @@ An Android calculator for mixed-number arithmetic. Enter fractions and mixed num
 - Scrollable calculation history with tap-to-restore
 - Sign toggle and backspace editing
 
-## How to Use
-
-The keypad has three sections:
-
-| Section | What it enters |
-|---------|---------------|
-| Left column | Whole number part of the left operand |
-| Right upper numpad | Numerator of the left operand |
-| Right lower numpad | Denominator of the left operand |
-
-After tapping an operator (`+`, `−`, `×`, `÷`), the right-side numpad switches to the second operand.
-
-**Basic flow:**
-1. Enter the left operand (whole, numerator, denominator as needed)
-2. Tap an operator
-3. Enter the right operand
-4. Tap `=`
-
-**Other controls:**
-- `+/−` — toggle the sign of the current field
-- `⌫` — delete the last digit entered
-- `C` — clear and start over
-- Tap a result — opens the step-by-step breakdown
-- History icon (top-left) — shows past calculations; tap one to restore it
-
 ## How to Install
 
 ### Prerequisites
